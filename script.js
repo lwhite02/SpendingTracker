@@ -4,14 +4,16 @@ let expenses = JSON.parse(localStorage.getItem('expenses')) || {};
 // Function to add expense
 function addExpense() {
     const amount = document.getElementById('amount').value;
+    const description = document.getElementById('description').value;
     const date = document.getElementById('date').value;
     if (amount && date) {
         const [year, month] = date.split('-');
         if (!expenses[year]) expenses[year] = {};
         if (!expenses[year][month]) expenses[year][month] = [];
-        expenses[year][month].push(parseFloat(amount));
+        expenses[year][month].push({ amount: parseFloat(amount), description });
         localStorage.setItem('expenses', JSON.stringify(expenses));
         document.getElementById('amount').value = '';
+        document.getElementById('description').value = '';
         updateView();
     }
 }
@@ -36,44 +38,36 @@ function updateView() {
     }
 
     updateTotal(currentExpenses);
-    updateChart(currentExpenses);
+    updatePieChart(currentExpenses);
 }
 
 // Function to update the total amount
 function updateTotal(currentExpenses) {
-    const total = currentExpenses.reduce((acc, expense) => acc + expense, 0);
+    const total = currentExpenses.reduce((acc, expense) => acc + expense.amount, 0);
     document.getElementById('total').textContent = total.toFixed(2);
 }
 
-// Function to update the chart
-function updateChart(currentExpenses) {
-    const ctx = document.getElementById('expenseChart').getContext('2d');
-    if (window.myChart) {
-        window.myChart.destroy();
+// Function to update the pie chart
+function updatePieChart(currentExpenses) {
+    const ctx = document.getElementById('expensePieChart').getContext('2d');
+    if (window.myPieChart) {
+        window.myPieChart.destroy();
     }
-    window.myChart = new Chart(ctx, {
-        type: 'bar',
+    window.myPieChart = new Chart(ctx, {
+        type: 'pie',
         data: {
-            labels: currentExpenses.map((_, index) => `Expense ${index + 1}`),
+            labels: currentExpenses.map(expense => expense.description || 'No Description'),
             datasets: [{
                 label: 'Amount Spent',
-                data: currentExpenses,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                data: currentExpenses.map(expense => expense.amount),
+                backgroundColor: currentExpenses.map((_, index) => `hsl(${index * 360 / currentExpenses.length}, 70%, 50%)`),
                 borderWidth: 1
             }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
         }
     });
 }
 
-// Initialize the total and chart on page load
+// Initialize the total and charts on page load
 document.addEventListener('DOMContentLoaded', () => {
     updateView();
 });
