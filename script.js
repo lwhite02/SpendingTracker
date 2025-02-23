@@ -18,6 +18,14 @@ function addExpense() {
     }
 }
 
+let income = parseFloat(localStorage.getItem('income')) || 0;
+
+// Function to update income
+function updateIncome() {
+    income = parseFloat(document.getElementById('income').value) || 0;
+    localStorage.setItem('income', income);
+    updateView();
+}
 // Function to reset expenses
 function resetExpenses() {
     if (confirm('Are you sure you want to reset all expenses?')) {
@@ -27,24 +35,40 @@ function resetExpenses() {
     }
 }
 
-// Function to update the view based on the selected month and year
+// Function to update the view based on selected month and year
 function updateView() {
     const filterDate = document.getElementById('filterDate').value;
     const [filterYear, filterMonth] = filterDate ? filterDate.split('-') : [null, null];
     let currentExpenses = [];
-    
+
     if (filterYear && filterMonth && expenses[filterYear] && expenses[filterYear][filterMonth]) {
         currentExpenses = expenses[filterYear][filterMonth];
     }
 
     updateTotal(currentExpenses);
+    updateExpenseList(currentExpenses);
     updatePieChart(currentExpenses);
+    updateBalance(); // New function to update balance
 }
-
-// Function to update the total amount
+// Function to update the total amount spent
 function updateTotal(currentExpenses) {
     const total = currentExpenses.reduce((acc, expense) => acc + expense.amount, 0);
     document.getElementById('total').textContent = total.toFixed(2);
+}
+
+// Function to update the expense list
+function updateExpenseList(currentExpenses) {
+    const expenseList = document.getElementById('expenseList');
+    expenseList.innerHTML = '';
+    currentExpenses.forEach(expense => {
+        const expenseItem = document.createElement('div');
+        expenseItem.className = 'expense-item';
+        expenseItem.innerHTML = `
+            <span>${expense.description || 'No Description'}</span>
+            <span>R${expense.amount.toFixed(2)}</span>
+        `;
+        expenseList.appendChild(expenseItem);
+    });
 }
 
 // Function to update the pie chart
@@ -66,7 +90,19 @@ function updatePieChart(currentExpenses) {
         }
     });
 }
+// Function to update the balance
+function updateBalance() {
+    const totalSpent = parseFloat(document.getElementById('total').textContent) || 0;
+    const balance = income - totalSpent;
+    document.getElementById('totalIncome').textContent = income.toFixed(2);
+    document.getElementById('balance').textContent = balance.toFixed(2);
+}
 
+// Initialize the total and charts on page load
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('income').value = income;
+    updateView();
+});
 // Initialize the total and charts on page load
 document.addEventListener('DOMContentLoaded', () => {
     updateView();
